@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Фонарь</string>
+    <string name="app_logo_text">Фонарь</string>
+    <string name="error_message_not_sent">Не удалось отправить сообщение.</string>
+    <string name="typing_tip">набирает...</string>
+    <string name="sendButtonText">отправить</string>
+    <string name="usernamePlaceholder">Имя пользователя</string>
+    <string name="messageTextFieldHint">Начните набирать сообщение...</string>
+    <string name="avatar_of_user_hint">Пользовательский аватар</string>
+    <string name="bioTextFieldHint">обо мне</string>
+    <string name="my_username_placeholder">Мой ник</string>
+    <string name="my_nickname_placeholder">загружается...</string>
+    <string name="bio">Обо мне</string>
+    <string name="firstname">Имя</string>
+    <string name="lastname">Фамилия</string>
+    <string name="server_url">Адрес сервера</string>
+    <string name="connect_and_continue">Подключиться</string>
+    <string name="nickname">Ник</string>
+    <string name="error_server_connection_failed">Не удалось подключиться к серверу.</string>
+    <string name="error_fill_fields">Пожалуйста, заполните имя и ник, чтобы подключиться к серверу.</string>
+    <string name="error_failed_save_profile">Не удалось сохранить профиль пользователя.</string>
+    <string name="success_avatar_updated">Аватар был обновлен на сервере.</string>
+    <string name="error_avatar_upload_failed">Не удалось загрузить изображение.</string>
+    <string name="error_failed_loading_messages">Не удалось загрузить сообщения.</string>
+    <string name="error_failed_loading_dialogs">Не удалось загрузить диалоги.</string>
+    <string name="error_invalid_data">Некорректные данные</string>
+    <string name="error_unknown">Безымянный</string>
+    <string name="error_failed_retrieve_users">Не удалось загрузить пользователей.</string>
+</resources>
