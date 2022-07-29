@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Fonar</string>
+    <string name="app_logo_text">Fonar</string>
+    <string name="error_message_not_sent">Failed to send message.</string>
+    <string name="typing_tip">typing...</string>
+    <string name="sendButtonText">send</string>
+    <string name="usernamePlaceholder">Username (@nickname)</string>
+    <string name="messageTextFieldHint">Type your message...</string>
+    <string name="avatar_of_user_hint">Avatar of User</string>
+    <string name="bioTextFieldHint">bio / typing</string>
+    <string name="my_username_placeholder">My Nickname</string>
+    <string name="my_nickname_placeholder">loading...</string>
+    <string name="bio">Bio</string>
+    <string name="firstname">Firstname</string>
+    <string name="lastname">Lastname</string>
+    <string name="server_url">Server URL</string>
+    <string name="connect_and_continue">Connect and Continue</string>
+    <string name="nickname">Nickname</string>
+    <string name="error_server_connection_failed">Failed to connect to the server.</string>
+    <string name="error_fill_fields">Please, fill firstname and nickname to access this server.</string>
+    <string name="error_failed_save_profile">Failed to save current profile.</string>
+    <string name="success_avatar_updated">Avatar has been uploaded.</string>
+    <string name="error_avatar_upload_failed">Failed to upload image.</string>
+    <string name="error_failed_loading_messages">Failed to load messages.</string>
+    <string name="error_failed_loading_dialogs">Failed to retrieve dialogs.</string>
+    <string name="error_invalid_data">Invalid Data</string>
+    <string name="error_unknown">Unknown</string>
+    <string name="error_failed_retrieve_users">Failed to retrieve users.</string>
+</resources>
