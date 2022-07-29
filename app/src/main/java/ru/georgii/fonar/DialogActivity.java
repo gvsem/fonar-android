@@ -1,7 +1,10 @@
 package ru.georgii.fonar;
 
+import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -86,6 +89,9 @@ public class DialogActivity extends FonarActivity implements FonarCallback {
                 while (lastTypingDate != null) {
                     try {
                         Thread.sleep(10000);
+                        if (lastTypingDate == null) {
+                            break;
+                        }
                         if ((new Date()).getTime() - lastTypingDate.getTime() >= 10000) {
                             untyping(uid);
                             break;
@@ -101,9 +107,7 @@ public class DialogActivity extends FonarActivity implements FonarCallback {
     @Override
     public void untyping(Long uid) {
         lastTypingDate = null;
-        runOnUiThread(() -> {
-            bioTextview.setText(profile.bio);
-        });
+        setSubtitle();
     }
 
     @Override
@@ -144,6 +148,8 @@ public class DialogActivity extends FonarActivity implements FonarCallback {
                     DialogActivity.this.profile = api.getUser(userId);
                     server.getSocketGateway(service.getUserIdentity()).subscribeForUser(userId, DialogActivity.this);
 
+                    setSubtitle();
+
                     messageAdapter = new MessageListAdapter(server);
                     messageAdapter.getPreviousMessages();
 
@@ -155,6 +161,21 @@ public class DialogActivity extends FonarActivity implements FonarCallback {
                         Toast.makeText(DialogActivity.this, getString(R.string.error_message_not_sent), Toast.LENGTH_SHORT).show();
                         sendButton.setEnabled(true);
                     });
+                }
+            }
+        }).start();
+    }
+
+    void setSubtitle() {
+        (new Thread() {
+            public void run() {
+                try {
+                    String cachedName = service.getServerManager().requireCurrentServer().getCachedName();
+                    runOnUiThread(() -> {
+                        bioTextview.setText(profile.getAddress(cachedName));
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }).start();
@@ -178,13 +199,34 @@ public class DialogActivity extends FonarActivity implements FonarCallback {
 
         sendButton.setOnClickListener(this::onSendButtonClicked);
 
-        messageField.setOnFocusChangeListener(this::onTypingEventFired);
+        messageField.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                DialogActivity.this.onTypingEventFired(messageField, true);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (s.toString().trim().length() == 0) {
+                    DialogActivity.this.onTypingEventFired(messageField, false);
+                }
+            }
+        });
+
+        setSubtitle();
 
         runOnUiThread(() -> {
             usernameTextview.setText(profile.getVisibleUsername());
-            bioTextview.setText(profile.bio);
-            photoImageView.setImageBitmap(profile.getAvatar());
+
+            if (profile.getAvatarBytes() != null) {
+                photoImageView.setImageBitmap(BitmapFactory.decodeByteArray(profile.getAvatarBytes(), 0, profile.getAvatarBytes().length));
+            }
+
 
             messagesView.setAdapter(messageAdapter);
             sendButton.setEnabled(true);
@@ -194,6 +236,9 @@ public class DialogActivity extends FonarActivity implements FonarCallback {
 
     void onSendButtonClicked(View v) {
         String message = messageField.getText().toString();
+        if (message.length() == 0) {
+            return;
+        }
         sendButton.setEnabled(false);
         (new Thread() {
             public void run() {
@@ -242,6 +287,7 @@ public class DialogActivity extends FonarActivity implements FonarCallback {
         final List<Message> messages = new ArrayList<>();
         int offset = 0;
         boolean endReached = false;
+
         public MessageListAdapter(Server server) throws IOException {
             this.server = server;
         }

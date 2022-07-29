@@ -26,7 +26,7 @@ public class Message {
     public static Message fromJson(JSONObject json) throws JSONException {
         Message d = new Message();
         d.id = json.optLong("id");
-        d.date = new Date(json.optString("date"));
+        d.date = new Date(json.optLong("date"));
         d.text = json.optString("text");
         d.seen = json.optBoolean("seen");
         d.toUserId = json.optLong("toUserId");

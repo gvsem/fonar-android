@@ -4,6 +4,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,11 +37,16 @@ public class SocketGateway {
         IO.Options config = new IO.Options();
         config.query = "authorization=" + identity.generateKey(configuration.salt);
         config.reconnection = true;
-        config.reconnectionDelay = 5000;
+        config.reconnectionDelay = 10000;
         config.transports = new String[]{WebSocket.NAME};
-        config.secure = false;
+        config.secure = true;
 
-        Socket socket = IO.socket(configuration.socketUrl, config);
+        String socketUrl = configuration.socketUrl;
+        if (configuration.socketUrl.startsWith(":")) {
+            URL serverUrl = new URL(server.url);
+            socketUrl = "http://" + serverUrl.getHost() + socketUrl;
+        }
+        Socket socket = IO.socket(socketUrl, config);
 
         SocketGateway socketGateway = new SocketGateway(socket);
 
@@ -122,7 +128,7 @@ public class SocketGateway {
     }
 
     public void notifyTypingStart(Long uid) {
-        socket.emit("startTyping", uid);
+        socket.emit("startedTyping", uid);
     }
 
     public void notifyTypingStopped(Long uid) {
