@@ -11,6 +11,7 @@ import java.io.IOException;
 
 import ru.georgii.fonar.core.api.callback.FonarCallback;
 import ru.georgii.fonar.core.api.callback.ServersObserverCallback;
+import ru.georgii.fonar.core.dto.ServerConfigDto;
 import ru.georgii.fonar.core.identity.UserIdentity;
 import ru.georgii.fonar.core.message.Message;
 import ru.georgii.fonar.core.server.Server;

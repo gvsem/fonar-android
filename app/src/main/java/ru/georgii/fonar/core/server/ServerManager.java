@@ -11,12 +11,13 @@ import java.util.Set;
 
 import ru.georgii.fonar.AppDatabase;
 import ru.georgii.fonar.core.api.FonarRestClient;
+import ru.georgii.fonar.core.api.callback.ServerManagerCallback;
 import ru.georgii.fonar.core.api.callback.ServersObserverCallback;
 import ru.georgii.fonar.core.dto.ServerConfigDto;
 import ru.georgii.fonar.core.exception.FonarServerException;
 import ru.georgii.fonar.core.identity.UserIdentity;
 
-public class ServerManager {
+public class ServerManager implements ServerManagerCallback {
 
     final ServerDao serverDao;
     final Set<ServersObserverCallback> subscribers = new HashSet<>();
@@ -78,7 +79,9 @@ public class ServerManager {
 
     public Server requireCurrentServer() throws FonarServerException {
         if (getServers().size() != 0) {
-            return getServers().get(0);
+            Server s = getServers().get(0);
+            s.subscribe(this);
+            return s;
         }
         throw new FonarServerException("No current server is available");
     }
@@ -90,4 +93,9 @@ public class ServerManager {
         addServer(server, identity);
     }
 
+    @Override
+    public void onServerConfigurationRetrieved(Server s, ServerConfigDto c) {
+        s.setCachedName(c.server_name);
+        serverDao.update(s);
+    }
 }

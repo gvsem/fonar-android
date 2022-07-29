@@ -3,15 +3,10 @@ package ru.georgii.fonar.core.api.callback;
 import ru.georgii.fonar.core.dto.ServerConfigDto;
 import ru.georgii.fonar.core.server.Server;
 
-public interface ServersObserverCallback {
+public interface ServerManagerCallback {
 
-    default void onServerAdded(Server s) {
-
-    }
-
-    default void onServerRemoved(Server s) {
+    default void onServerConfigurationRetrieved(Server s, ServerConfigDto c) {
 
     }
-
 
 }

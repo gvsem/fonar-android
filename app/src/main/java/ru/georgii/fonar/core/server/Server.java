@@ -15,6 +15,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import ru.georgii.fonar.core.api.FonarRestClient;
 import ru.georgii.fonar.core.api.FonarServerAPI;
 import ru.georgii.fonar.core.api.SocketGateway;
+import ru.georgii.fonar.core.api.callback.ServerManagerCallback;
 import ru.georgii.fonar.core.dto.ServerConfigDto;
 import ru.georgii.fonar.core.identity.UserIdentity;
 
@@ -82,8 +83,19 @@ public class Server {
             throw new IOException("Server unavailable.");
         }
 
-        return response.body();
+        ServerConfigDto r = response.body();
+        if (callback != null) {
+            callback.onServerConfigurationRetrieved(this, r);
+        }
+        return r;
 
+    }
+
+    @Ignore
+    ServerManagerCallback callback;
+
+    public void subscribe(ServerManagerCallback c) {
+        this.callback = c;
     }
 
     public SocketGateway getSocketGateway(UserIdentity identity) throws IOException {

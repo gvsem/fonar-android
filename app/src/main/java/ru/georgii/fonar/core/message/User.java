@@ -66,7 +66,8 @@ public class User {
         if (this.avatarBytes == null) {
             return null;
         }
-        return Base64.getDecoder().decode(this.avatarBytes);
+        byte [] r = Base64.getDecoder().decode(this.avatarBytes);
+        return r;
     }
 
 }
