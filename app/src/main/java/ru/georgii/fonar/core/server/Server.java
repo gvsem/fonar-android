@@ -29,9 +29,6 @@ public class Server {
     @ColumnInfo(name = "cachedName")
     private String cachedName;
 
-    @Ignore
-    private SocketGateway socketGateway;
-
     public Server(String url) {
         this.url = url;
     }
@@ -99,20 +96,17 @@ public class Server {
     }
 
     public SocketGateway getSocketGateway(UserIdentity identity) throws IOException {
-        if ((this.socketGateway == null) || !(this.socketGateway.isAlive())) {
-            try {
-                this.socketGateway = SocketGateway.create(this, identity);
-            } catch (URISyntaxException e) {
-                throw new IOException(e);
-            }
+        if (callback == null) {
+            return null;
         }
-        return this.socketGateway;
+        return callback.getSocketGateway(this, identity);
     }
 
     public void close() {
-        if (this.socketGateway != null) {
-            this.socketGateway.close();
+        if (callback == null) {
+            return;
         }
+        callback.getSocketGateway(this, null).close();
     }
 
 }

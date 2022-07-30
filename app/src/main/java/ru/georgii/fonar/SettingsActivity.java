@@ -99,19 +99,21 @@ public class SettingsActivity extends FonarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE |
+                                     WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         firstnameEditText = findViewById(R.id.firstnameEditText);
         lastnameEditText = findViewById(R.id.lastnameEditText);
         bioEditText = findViewById(R.id.bioEditText);
         nicknameEditText = findViewById(R.id.nicknameEditText);
         serverEditText = findViewById(R.id.serverEditText);
-        connectButton = findViewById(R.id.connectButton);
-
         profileSettingsView = findViewById(R.id.profileSettingsView);
+
+        connectButton = findViewById(R.id.connectButton);
+        connectButton.setOnClickListener(this::onConnectButtonClicked);
 
         photoCardView = findViewById(R.id.photoCardView);
         photoImageView = findViewById(R.id.photoImageView);
-
         photoImageView.setOnClickListener((view) -> {
             if (service != null) {
                 ImagePicker.with(this)
@@ -123,10 +125,6 @@ public class SettingsActivity extends FonarActivity {
         });
 
         enableControls(false);
-
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-
-        connectButton.setOnClickListener(this::onConnectButtonClicked);
 
     }
 
@@ -141,20 +139,19 @@ public class SettingsActivity extends FonarActivity {
 
                 try {
                     Server server = service.getServerManager().requireCurrentServer();
-                    if (server != null) {
-                        runOnUiThread(() -> {
-                            serverEditText.setText(server.getUrl());
-                        });
+                    runOnUiThread(() -> {
+                        serverEditText.setText(server.getUrl());
+                    });
 
-                        try {
-                            getUserProfile(server);
-                        } catch (FonarServerException e) {
-                            e.printStackTrace();
-                        }
+                    try {
+                        getUserProfile(server);
+                    } catch (FonarServerException e) {
+                        e.printStackTrace();
                     }
                 } catch (FonarServerException e) {
                     e.printStackTrace();
                     runOnUiThread(() -> {
+                        serverEditText.setText("https://fonar-messenger.herokuapp.com");
                         Toast.makeText(SettingsActivity.this, getString(R.string.error_server_connection_failed), Toast.LENGTH_SHORT).show();
                     });
                     enableControls(true);

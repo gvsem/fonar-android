@@ -52,6 +52,9 @@ public class DialogActivity extends FonarActivity implements FonarCallback {
 
     @Override
     public void messageReceived(Message m) {
+        if (Objects.equals(m.fromUserId, m.toUserId)) {
+            return;
+        }
         runOnUiThread(() -> {
             messageAdapter.messages.add(0, m);
             messageAdapter.notifyItemInserted(0);
@@ -85,17 +88,14 @@ public class DialogActivity extends FonarActivity implements FonarCallback {
             bioTextview.setText(R.string.typing_tip);
         });
         (new Thread() {
-            public void run() {
+            public synchronized void run() {
                 while (lastTypingDate != null) {
                     try {
-                        Thread.sleep(10000);
-                        if (lastTypingDate == null) {
-                            break;
-                        }
-                        if ((new Date()).getTime() - lastTypingDate.getTime() >= 10000) {
+                        if ((new Date()).getTime() - ((lastTypingDate != null) ? lastTypingDate.getTime() : 0) >= 10000) {
                             untyping(uid);
                             break;
                         }
+                        Thread.sleep(10000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }

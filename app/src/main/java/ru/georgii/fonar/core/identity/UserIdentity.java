@@ -103,6 +103,9 @@ public class UserIdentity {
     }
 
     public Bitmap getAvatar() {
+        if (this.avatarBytes == null) {
+            this.avatarBytes = "";
+        }
         byte[] avatarBytes = Base64.getDecoder().decode(this.avatarBytes);
         return BitmapFactory.decodeByteArray(avatarBytes, 0, avatarBytes.length);
     }

@@ -3,6 +3,7 @@ package ru.georgii.fonar.core.api;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
@@ -21,23 +22,27 @@ import ru.georgii.fonar.core.server.Server;
 
 public class SocketGateway {
 
-    private final Socket socket;
+    public Socket socket;
     private final Set<FonarCallback> allSubscribers = new HashSet<>();
     private final Map<Long, Set<FonarCallback>> userSubscribers = new HashMap<>();
-    private boolean isConnected = false;
+
+    private Server server;
+    private UserIdentity identity;
+    private boolean isConnected;
+
 
     private SocketGateway(Socket socket) {
         this.socket = socket;
     }
 
-    public static SocketGateway create(Server server, UserIdentity identity) throws IOException, URISyntaxException {
-
+    public static Socket createSocket(SocketGateway socketGateway, Server server, UserIdentity identity) throws URISyntaxException, IOException {
         ServerConfigDto configuration = server.getConfiguration();
 
         IO.Options config = new IO.Options();
         config.query = "authorization=" + identity.generateKey(configuration.salt);
         config.reconnection = true;
         config.reconnectionDelay = 10000;
+        config.timeout = -1;
         config.transports = new String[]{WebSocket.NAME};
         config.secure = true;
 
@@ -48,11 +53,12 @@ public class SocketGateway {
         }
         Socket socket = IO.socket(socketUrl, config);
 
-        SocketGateway socketGateway = new SocketGateway(socket);
-
         socket.on("connect_error", socketGateway::onConnectionError);
         socket.on("connect", socketGateway::onConnected);
-        socket.on("disconnect", socketGateway::onDisconnected);
+        socket.on("disconnect", args -> {
+            System.out.println("Disconnected from " + server.url);
+            socketGateway.reconnect();
+        });
         socket.on("error", socketGateway::onConnectionError);
 
         socket.on("message", args -> {
@@ -66,44 +72,56 @@ public class SocketGateway {
         socket.on("messageSeen", args -> {
             try {
                 socketGateway.onMessageSeen(Long.valueOf((Integer) args[0]), Long.valueOf((Integer) args[1]));
+                System.out.println(Long.valueOf((Integer) args[0]) + "has seen message " + Long.valueOf((Integer) args[1]));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
 
-        socket.on("startedTyping", args -> {
+        socket.on("userStartedTyping", args -> {
             try {
                 socketGateway.onStartedTyping(Long.valueOf((Integer) args[0]));
+                System.out.println(Long.valueOf((Integer) args[0]) + "started typing to me");
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
 
-        socket.on("stoppedTyping", args -> {
+        socket.on("userStoppedTyping", args -> {
             try {
                 socketGateway.onStoppedTyping(Long.valueOf((Integer) args[0]));
+                System.out.println(Long.valueOf((Integer) args[0]) + "stopped typing to me");
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
 
         socket.connect();
+        return socket;
+    }
 
-        return socketGateway;
+    public static SocketGateway create(Server server, UserIdentity identity) throws IOException, URISyntaxException {
 
+        if (identity == null) {
+            return null;
+        }
+
+        SocketGateway gateway = new SocketGateway(null);
+        gateway.socket  = SocketGateway.createSocket(gateway, server, identity);
+        gateway.server = server;
+        gateway.identity = identity;
+        return gateway;
     }
 
     protected void onConnected(Object... args) {
         isConnected = true;
-    }
-
-    protected void onDisconnected(Object... args) {
-        isConnected = false;
+        System.out.println("Connected to " + server.url);
     }
 
     protected void onConnectionError(Object... args) {
         isConnected = false;
         ((Exception) args[0]).printStackTrace();
+        System.out.println("Error from " + server.url);
     }
 
     public void subscribe(FonarCallback c) {
@@ -128,23 +146,36 @@ public class SocketGateway {
     }
 
     public void notifyTypingStart(Long uid) {
-        socket.emit("startedTyping", uid);
+        if (!socket.connected()) {
+            this.reconnect();
+        }
+        socket.emit("meStartedTyping", uid);
+        System.out.println("meStartedTyping to " + uid);
     }
 
     public void notifyTypingStopped(Long uid) {
-        socket.emit("stoppedTyping", uid);
+        if (!socket.connected()) {
+            this.reconnect();
+        }
+
+        socket.emit("meStoppedTyping", uid);
+        System.out.println("meStoppedTyping to " + uid);
     }
 
     public void seenMessage(Long messageId, Long uid) {
+        if (!socket.connected()) {
+            this.reconnect();
+        }
         socket.emit("seenMessage", messageId, uid);
+        System.out.println("seenMessage id " + messageId + " of " + uid);
     }
 
     public void close() {
-        if (socket.connected() && isConnected) {
+        //if (socket.connected() && isConnected) {
             socket.disconnect();
             socket.close();
-            isConnected = false;
-        }
+
+        //}
     }
 
     protected void onMessageDelivered(Message m) {
@@ -195,7 +226,6 @@ public class SocketGateway {
             }
         }
 
-        System.out.println("started typing " + userId);
     }
 
     protected void onStoppedTyping(Long userId) {
@@ -215,7 +245,17 @@ public class SocketGateway {
         System.out.println("stopped typing " + userId);
     }
 
-    public boolean isAlive() {
-        return isConnected && this.socket.connected();
+    public void reconnect() {
+        System.out.println("Attempting to reconnect to " + server.getUrl());
+        if (socket != null) {
+            socket.disconnect();
+            socket.close();
+            try {
+                socket = SocketGateway.createSocket(this, server, identity);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
+
 }

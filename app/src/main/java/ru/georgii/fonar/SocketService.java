@@ -12,6 +12,7 @@ import java.io.IOException;
 import ru.georgii.fonar.core.api.callback.FonarCallback;
 import ru.georgii.fonar.core.api.callback.ServersObserverCallback;
 import ru.georgii.fonar.core.dto.ServerConfigDto;
+import ru.georgii.fonar.core.exception.FonarServerException;
 import ru.georgii.fonar.core.identity.UserIdentity;
 import ru.georgii.fonar.core.message.Message;
 import ru.georgii.fonar.core.server.Server;
@@ -31,8 +32,8 @@ public class SocketService extends Service implements FonarCallback, ServersObse
             public void run() {
                 for (Server s : serverManager.getServers()) {
                     try {
-                        s.getSocketGateway(getUserIdentity()).subscribe(SocketService.this);
-                    } catch (IOException e) {
+                        s.getSocketGateway(getUserIdentity());
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
