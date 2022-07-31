@@ -1,5 +1,6 @@
 plugins {
     id 'com.android.application'
+    id "org.openapi.generator" version "6.0.1"
 }
 
 android {
@@ -25,6 +26,13 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    sourceSets {
+        main {
+            java.srcDirs = ['$buildDir/generated/openapi/src/main/java']
+        }
+    }
+
 }
 
 dependencies {
@@ -54,5 +62,40 @@ dependencies {
 
     implementation 'com.squareup.picasso:picasso:2.8'
 
+// https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.13.3'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.3'
+    implementation 'com.fasterxml.jackson:databind:2.13.3'
 
+
+}
+
+
+apply plugin: 'com.android.application'
+apply plugin: 'org.openapi.generator'
+
+openApiValidate {
+    inputSpec = "$rootDir/app/src/main/openapi/fonar-1.0.0-alpha0.json"
+    recommend = true
+}
+
+openApiGenerate {
+    generatorName = "java"
+    inputSpec = "$rootDir/app/src/main/openapi/fonar-1.0.0-alpha0.json"
+    outputDir = "$buildDir/generated/openapi"
+    groupId = "$project.group"
+    id = "$project.name-openapi"
+    version = "$project.version"
+    apiPackage = "ru.georgii.fonar.api"
+    invokerPackage = "ru.georgii.fonar.invoker"
+    modelPackage = "ru.georgii.fonar.model"
+    configOptions = [
+            java8               : "true",
+            dateLibrary         : "java8",
+            library             : "retrofit2"
+    ]
+}
+
+afterEvaluate {
+    tasks.compileDebugJavaWithJavac.dependsOn(tasks.openApiGenerate)
 }

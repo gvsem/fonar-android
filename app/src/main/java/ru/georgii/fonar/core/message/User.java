@@ -1,7 +1,10 @@
 package ru.georgii.fonar.core.message;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
@@ -9,6 +12,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Base64;
+
+import ru.georgii.fonar.core.dto.ServerConfigDto;
 
 public class User {
 
@@ -24,6 +29,7 @@ public class User {
 
     @Nullable
     public String avatarBytes;
+
     public String bio;
 
     public User() {
@@ -61,13 +67,44 @@ public class User {
         return bio;
     }
 
+    public String getVisibleUsername() {
+        if ((firstname != null) && (lastname != null)) {
+            return firstname + " " + lastname;
+        } else if (firstname != null) {
+            return firstname;
+        } else if (lastname != null) {
+            return lastname;
+        } else {
+            return "Unknown";
+        }
+    }
+
+    public String getAddress(String server_name) {
+        if (nickname != null) {
+            return nickname + " @ " + server_name;
+        }
+        return server_name;
+    }
+
+    public String getAddress(ServerConfigDto serverConfig) {
+        if (nickname != null) {
+            return nickname + " @ " + serverConfig.server_name;
+        }
+        return serverConfig.server_name;
+    }
+
+    @NonNull
     @RequiresApi(api = Build.VERSION_CODES.O)
     public byte[] getAvatarBytes() {
         if (this.avatarBytes == null) {
-            return null;
+            return new byte[0];
         }
-        byte [] r = Base64.getDecoder().decode(this.avatarBytes);
-        return r;
+        return Base64.getDecoder().decode(this.avatarBytes);
+    }
+
+    @NonNull
+    public Bitmap getBitmap() {
+        return BitmapFactory.decodeByteArray(getAvatarBytes(), 0, getAvatarBytes().length);
     }
 
 }

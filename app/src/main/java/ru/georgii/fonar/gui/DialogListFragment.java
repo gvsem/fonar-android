@@ -206,12 +206,10 @@ public class DialogListFragment extends Fragment {
                     return;
                 }
 
-                if (c.getAvatarBytes() != null) {
-                    photoImageView.setImageBitmap(BitmapFactory.decodeByteArray(c.getAvatarBytes(), 0, c.getAvatarBytes().length));
-                }
+                photoImageView.setImageBitmap(c.getUser().getBitmap());
 
                 if ((c.getUser().firstname != null) && (c.getUser().lastname != null)) {
-                    usernameTextView.setText(c.getUser().firstname + " " + c.getUser().lastname);
+                    usernameTextView.setText(c.getUser().getVisibleUsername());
                 } else if (c.getUser().nickname != null) {
                     usernameTextView.setText(c.getUser().nickname);
                 } else {
