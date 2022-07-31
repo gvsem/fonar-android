@@ -85,7 +85,7 @@ public class FonarRestClient {
         } catch (IOException e) {
             throw new FonarServerException("registration failed", e);
         }
-        if (response.code() != 200) {
+        if ((response.code() != 200) && (response.code() != 201)) {
             throw new FonarServerException("registration failed");
         }
 

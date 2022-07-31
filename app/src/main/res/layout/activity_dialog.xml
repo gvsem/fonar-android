@@ -63,6 +63,7 @@
                 android:fontFamily="@font/inter_extrabold"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
+                android:singleLine="true"
                 android:text="@string/usernamePlaceholder"
                 android:textColor="@color/logo_text"
                 android:textSize="16sp" />
@@ -74,6 +75,7 @@
                 android:fontFamily="@font/inter_extrabold"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
+                android:singleLine="true"
                 android:text="@string/bioTextFieldHint"
                 android:textColor="@color/logo_text"
                 android:textSize="12sp" />
