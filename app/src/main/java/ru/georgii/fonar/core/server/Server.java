@@ -106,7 +106,7 @@ public class Server {
         if (callback == null) {
             return;
         }
-        callback.getSocketGateway(this, null).close();
+        callback.closeSocketGateway(this);
     }
 
 }

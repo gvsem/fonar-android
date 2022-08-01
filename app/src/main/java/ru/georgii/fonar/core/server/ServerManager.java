@@ -2,11 +2,10 @@ package ru.georgii.fonar.core.server;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.room.Ignore;
 import androidx.room.Room;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,19 +19,19 @@ import ru.georgii.fonar.core.api.SocketGateway;
 import ru.georgii.fonar.core.api.callback.ServerManagerCallback;
 import ru.georgii.fonar.core.api.callback.ServersObserverCallback;
 import ru.georgii.fonar.core.dto.ServerConfigDto;
-import ru.georgii.fonar.core.exception.FonarServerException;
+import ru.georgii.fonar.core.exception.FonarException;
+import ru.georgii.fonar.core.exception.NotASupportedFonarServerException;
 import ru.georgii.fonar.core.identity.UserIdentity;
-import ru.georgii.fonar.core.message.User;
 
 public class ServerManager implements ServerManagerCallback {
 
     final ServerDao serverDao;
     final Set<ServersObserverCallback> subscribers = new HashSet<>();
+    private Map<Long, SocketGateway> socketGateways = new HashMap<>();
 
     private ServerManager(ServerDao serverDao) {
         this.serverDao = serverDao;
     }
-
 
     public static ServerManager getServerManager(android.content.Context context) {
         try {
@@ -47,20 +46,25 @@ public class ServerManager implements ServerManagerCallback {
         subscribers.add(c);
     }
 
-    protected Server addServer(Server server, UserIdentity identity) throws FonarServerException {
+    protected Server addServer(Server server, UserIdentity identity) throws UnknownHostException, NotASupportedFonarServerException {
         server.setId(serverDao.insert(server));
 
         try {
+
             ServerConfigDto configuration = server.getConfiguration();
             if (!Objects.equals(configuration.api_spec, "FONAR")) {
-                throw new FonarServerException("Server api specification is not supported");
+                throw new NotASupportedFonarServerException("Server api specification '" + configuration.api_spec + "' is not supported");
             }
             server.setCachedName(configuration.server_name);
             server.subscribe(this);
 
             FonarRestClient.register(server, identity);
+        } catch (UnknownHostException e) {
+            throw e;
         } catch (IOException e) {
-            throw new FonarServerException(e);
+            throw new NotASupportedFonarServerException("Failed to get server configuration", e);
+        } catch (FonarException e) {
+            throw new NotASupportedFonarServerException(e);
         }
 
         for (ServersObserverCallback c : subscribers) {
@@ -86,12 +90,11 @@ public class ServerManager implements ServerManagerCallback {
             c.onServerRemoved(server);
         }
         serverDao.delete(server);
-
     }
 
     @NonNull
-    public Server requireCurrentServer() throws FonarServerException {
-        if (currentServer != null)  {
+    public Server requireCurrentServer() throws FonarException {
+        if (currentServer != null) {
             return currentServer;
         }
         if (getServers().size() != 0) {
@@ -100,19 +103,16 @@ public class ServerManager implements ServerManagerCallback {
             currentServer = s;
             return s;
         }
-        throw new FonarServerException("No current server is available");
+        throw new FonarException("No current server is available");
     }
 
-    public void setCurrentServer(Server server, UserIdentity identity) throws FonarServerException {
-        for (Server s : serverDao.getAll()) {
+    public void setCurrentServer(Server server, UserIdentity identity) throws UnknownHostException, NotASupportedFonarServerException {
+        List<Server> servers = serverDao.getAll();
+        for (Server s : servers) {
             removeServer(s);
         }
-        if (currentServer != null ) {
-            try {
-                currentServer.getSocketGateway(identity).close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        if (currentServer != null) {
+            currentServer.close();
         }
         currentServer = null;
         addServer(server, identity);
@@ -124,32 +124,21 @@ public class ServerManager implements ServerManagerCallback {
         serverDao.update(s);
     }
 
-    private Map<Long, SocketGateway> socketGateways;
 
     @Override
     public synchronized SocketGateway getSocketGateway(Server s, UserIdentity identity) {
-
-        if (socketGateways == null) {
-            socketGateways = new HashMap<>();
-        }
-
         if (!socketGateways.containsKey(s.getId())) {
-            try {
-                socketGateways.put(s.getId(), SocketGateway.create(s, identity));
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
+            socketGateways.put(s.getId(), new SocketGateway(s, identity));
         }
-
         return socketGateways.get(s.getId());
     }
 
     @Override
     public void closeSocketGateway(Server s) {
         if (socketGateways.containsKey(s.getId())) {
-            this.socketGateways.get(s.getId()).close();
+            Objects.requireNonNull(this.socketGateways.get(s.getId())).close();
             this.socketGateways.remove(s.getId());
         }
     }
+
 }

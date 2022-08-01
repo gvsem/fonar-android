@@ -4,6 +4,18 @@ import ru.georgii.fonar.core.message.Message;
 
 public interface FonarCallback {
 
+    default void onSubscribed() {
+
+    }
+
+    default void onError(Exception e) {
+
+    }
+
+    default void onUnsubscribed() {
+
+    }
+
     default void messageReceived(Message m) {
 
     }

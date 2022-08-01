@@ -26,4 +26,8 @@
     <string name="error_invalid_data">Invalid Data</string>
     <string name="error_unknown">Unknown</string>
     <string name="error_failed_retrieve_users">Failed to retrieve users.</string>
+    <string name="error_swapping_server_failed">Failed to save new server.</string>
+    <string name="error_failed_resolve_host">Failed to resolve server hostname.</string>
+    <string name="error_not_supported_fonar_server">This server is not supported.</string>
+    <string name="placeholder_connecting">Connecting...</string>
 </resources>

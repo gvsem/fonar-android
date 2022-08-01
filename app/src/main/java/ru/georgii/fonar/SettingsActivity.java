@@ -17,11 +17,14 @@ import androidx.cardview.widget.CardView;
 import com.github.dhaval2404.imagepicker.ImagePicker;
 
 import java.io.File;
+import java.net.UnknownHostException;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
-import ru.georgii.fonar.core.exception.FonarServerException;
+import ru.georgii.fonar.core.exception.FonarException;
+import ru.georgii.fonar.core.exception.NotASupportedFonarServerException;
+import ru.georgii.fonar.core.exception.NotEnoughFieldsException;
 import ru.georgii.fonar.core.identity.UserIdentity;
 import ru.georgii.fonar.core.server.Server;
 
@@ -100,7 +103,7 @@ public class SettingsActivity extends FonarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE |
-                                     WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         firstnameEditText = findViewById(R.id.firstnameEditText);
         lastnameEditText = findViewById(R.id.lastnameEditText);
@@ -145,10 +148,10 @@ public class SettingsActivity extends FonarActivity {
 
                     try {
                         getUserProfile(server);
-                    } catch (FonarServerException e) {
+                    } catch (FonarException e) {
                         e.printStackTrace();
                     }
-                } catch (FonarServerException e) {
+                } catch (FonarException e) {
                     e.printStackTrace();
                     runOnUiThread(() -> {
                         serverEditText.setText("https://fonar-messenger.herokuapp.com");
@@ -165,16 +168,45 @@ public class SettingsActivity extends FonarActivity {
 
     void onConnectButtonClicked(View view) {
 
+        Toast.makeText(SettingsActivity.this, getString(R.string.placeholder_connecting), Toast.LENGTH_SHORT).show();
+
         enableControls(false);
 
         (new Thread() {
             public void run() {
 
+                Server s = new Server(serverEditText.getText().toString());
                 try {
-                    service.getServerManager().setCurrentServer(new Server(serverEditText.getText().toString()),
-                            UserIdentity.getInstance(getApplicationContext()));
+                    service.getServerManager().setCurrentServer(s, service.getUserIdentity());
+                } catch (UnknownHostException e) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(SettingsActivity.this, getString(R.string.error_failed_resolve_host), Toast.LENGTH_SHORT).show();
+                    });
+                    enableControls(true);
+                    return;
+                } catch (NotASupportedFonarServerException e) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(SettingsActivity.this, getString(R.string.error_not_supported_fonar_server) + " " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+                    enableControls(true);
+                    return;
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    runOnUiThread(() -> {
+                        Toast.makeText(SettingsActivity.this, getString(R.string.error_swapping_server_failed), Toast.LENGTH_SHORT).show();
+                    });
+                    enableControls(true);
+                    return;
+                }
+
+                try {
+                    saveUserProfile(service.getServerManager().requireCurrentServer());
+                } catch (NotEnoughFieldsException e) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(SettingsActivity.this, getString(R.string.error_fill_fields), Toast.LENGTH_SHORT).show();
+                    });
+                    enableControls(true);
+                    return;
+                } catch (FonarException e) {
                     runOnUiThread(() -> {
                         Toast.makeText(SettingsActivity.this, getString(R.string.error_server_connection_failed), Toast.LENGTH_SHORT).show();
                     });
@@ -182,26 +214,14 @@ public class SettingsActivity extends FonarActivity {
                     return;
                 }
 
-                try {
-                    if (profileSettingsView.getVisibility() == View.VISIBLE) {
-                        saveUserProfile(service.getServerManager().requireCurrentServer());
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    runOnUiThread(() -> {
-                        Toast.makeText(SettingsActivity.this, getString(R.string.error_server_connection_failed), Toast.LENGTH_SHORT).show();
-                    });
-                    enableControls(true);
-                    return;
-                }
-
+                enableControls(true);
                 finish();
 
             }
         }).start();
     }
 
-    void getUserProfile(Server server) throws FonarServerException {
+    void getUserProfile(Server server) throws FonarException {
 
         enableControls(false);
 
@@ -228,14 +248,12 @@ public class SettingsActivity extends FonarActivity {
                 Toast.makeText(SettingsActivity.this, getString(R.string.error_server_connection_failed), Toast.LENGTH_SHORT).show();
                 //profileSettingsView.setVisibility(View.GONE);
             });
-            throw new FonarServerException("Failed to save current profile.", e);
+            throw new FonarException("Failed to save current profile.", e);
         }
 
     }
 
-    void saveUserProfile(Server server) throws FonarServerException {
-
-        enableControls(false);
+    void saveUserProfile(Server server) throws FonarException {
 
         try {
 
@@ -243,8 +261,8 @@ public class SettingsActivity extends FonarActivity {
                 runOnUiThread(() -> {
                     Toast.makeText(SettingsActivity.this, getString(R.string.error_fill_fields), Toast.LENGTH_SHORT).show();
                 });
-                enableControls(true);
-                throw new FonarServerException("Not enough fields filled.");
+
+                throw new NotEnoughFieldsException("Not enough fields filled.");
             }
 
             UserIdentity me = UserIdentity.getInstance(getApplicationContext());
@@ -263,7 +281,7 @@ public class SettingsActivity extends FonarActivity {
                 Toast.makeText(SettingsActivity.this, getString(R.string.error_failed_save_profile), Toast.LENGTH_SHORT).show();
                 //profileSettingsView.setVisibility(View.GONE);
             });
-            throw new FonarServerException("Failed to save current profile.", e);
+            throw new FonarException("Failed to save current profile.", e);
         }
 
     }

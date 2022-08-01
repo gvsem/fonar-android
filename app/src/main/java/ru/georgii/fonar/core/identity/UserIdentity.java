@@ -14,7 +14,7 @@ import java.util.Objects;
 
 import ru.georgii.fonar.core.dto.ServerConfigDto;
 import ru.georgii.fonar.core.dto.UserDto;
-import ru.georgii.fonar.core.exception.FonarServerException;
+import ru.georgii.fonar.core.exception.FonarException;
 import ru.georgii.fonar.core.server.Server;
 
 public class UserIdentity {
@@ -141,7 +141,7 @@ public class UserIdentity {
 
     }
 
-    public void updateOnServer(Server server) throws IOException, FonarServerException {
+    public void updateOnServer(Server server) throws IOException, FonarException {
         UserDto u = new UserDto();
         u.firstname = firstname;
         u.lastname = lastname;

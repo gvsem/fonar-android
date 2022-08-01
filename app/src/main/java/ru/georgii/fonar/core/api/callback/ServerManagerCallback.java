@@ -15,6 +15,8 @@ public interface ServerManagerCallback {
         return null;
     }
 
-    default void closeSocketGateway(Server s) { }
+    default void closeSocketGateway(Server s) {
+
+    }
 
 }

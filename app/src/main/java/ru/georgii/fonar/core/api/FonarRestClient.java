@@ -12,7 +12,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import ru.georgii.fonar.core.dto.MessageDto;
 import ru.georgii.fonar.core.dto.ServerConfigDto;
 import ru.georgii.fonar.core.dto.UserDto;
-import ru.georgii.fonar.core.exception.FonarServerException;
+import ru.georgii.fonar.core.exception.FonarException;
 import ru.georgii.fonar.core.identity.UserIdentity;
 import ru.georgii.fonar.core.message.Dialog;
 import ru.georgii.fonar.core.message.Message;
@@ -29,7 +29,7 @@ public class FonarRestClient {
         this.server = server;
         this.id = id;
 
-        serverConfig = getServerConfig(server);
+        serverConfig = server.getConfiguration();
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(server.getUrl())
@@ -44,31 +44,13 @@ public class FonarRestClient {
         return new FonarRestClient(server, identity);
     }
 
-    public static ServerConfigDto getServerConfig(Server server) throws IOException {
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(server.getUrl())
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        FonarServerAPI serverApi = retrofit.create(FonarServerAPI.class);
-
-        Call<ServerConfigDto> call = serverApi.serverInformation();
-        Response<ServerConfigDto> response = call.execute();
-        if (response.code() != 200) {
-            throw new IOException("Server unavailable.");
-        }
-        return response.body();
-
-    }
-
-    public static void register(Server server, UserIdentity identity) throws FonarServerException {
+    public static void register(Server server, UserIdentity identity) throws FonarException {
 
         ServerConfigDto configuration;
         try {
-            configuration = getServerConfig(server);
-        } catch (Exception e) {
-            throw new FonarServerException("Failed to retrieve server configuration", e);
+            configuration = server.getConfiguration();
+        } catch (IOException e) {
+            throw new FonarException("Failed to retrieve server configuration", e);
         }
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -83,10 +65,10 @@ public class FonarRestClient {
         try {
             response = call.execute();
         } catch (IOException e) {
-            throw new FonarServerException("registration failed", e);
+            throw new FonarException("registration failed", e);
         }
         if ((response.code() != 200) && (response.code() != 201)) {
-            throw new FonarServerException("registration failed");
+            throw new FonarException("registration failed");
         }
 
 
@@ -156,30 +138,30 @@ public class FonarRestClient {
         }
     }
 
-    public UserDto getMe() throws FonarServerException {
+    public UserDto getMe() throws FonarException {
         Call<UserDto> call = api.getMe(getKey());
 
         try {
             Response<UserDto> r = call.execute();
             if (r.body() == null) {
-                throw new FonarServerException("Empty user profile.");
+                throw new FonarException("Empty user profile.");
             }
             return r.body();
         } catch (IOException e) {
-            throw new FonarServerException(e);
+            throw new FonarException(e);
         }
     }
 
-    public void setMe(UserDto dto) throws FonarServerException {
+    public void setMe(UserDto dto) throws FonarException {
         Call<Void> call = api.updateUser(getKey(), dto);
         try {
             Response<Void> r = call.execute();
             if (r.code() != 201) {
-                throw new FonarServerException(call.request().url() + " failed with code " + r.code());
+                throw new FonarException(call.request().url() + " failed with code " + r.code());
             }
         } catch (IOException e) {
             e.printStackTrace();
-            throw new FonarServerException("Failed updating profile information.", e);
+            throw new FonarException("Failed updating profile information.", e);
         }
     }
 

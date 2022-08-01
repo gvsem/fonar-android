@@ -31,7 +31,7 @@ import ru.georgii.fonar.core.api.FonarRestClient;
 import ru.georgii.fonar.core.api.callback.FonarCallback;
 import ru.georgii.fonar.core.dto.MessageDto;
 import ru.georgii.fonar.core.dto.UserDto;
-import ru.georgii.fonar.core.exception.FonarServerException;
+import ru.georgii.fonar.core.exception.FonarException;
 import ru.georgii.fonar.core.message.Message;
 import ru.georgii.fonar.core.server.Server;
 
@@ -46,6 +46,17 @@ public class DialogActivity extends FonarActivity implements FonarCallback {
     private Button sendButton;
     private TextView bioTextview;
     private TextView usernameTextview;
+
+    @Override
+    public void onSubscribed() {
+
+    }
+
+    @Override
+    public void onUnsubscribed() {
+        finish();
+    }
+
     private ImageView photoImageView;
     private RecyclerView messagesView;
     private MessageListAdapter messageAdapter;
@@ -274,7 +285,7 @@ public class DialogActivity extends FonarActivity implements FonarCallback {
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
-                } catch (FonarServerException e) {
+                } catch (FonarException e) {
                     e.printStackTrace();
                 }
             }

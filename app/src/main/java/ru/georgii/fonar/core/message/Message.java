@@ -25,12 +25,13 @@ public class Message {
 
     public static Message fromJson(JSONObject json) throws JSONException {
         Message d = new Message();
-        d.id = json.optLong("id");
-        d.date = new Date(json.optLong("date"));
-        d.text = json.optString("text");
-        d.seen = json.optBoolean("seen");
-        d.toUserId = json.optLong("toUserId");
-        d.fromUserId = json.optLong("fromUserId");
+        d.id = json.getLong("id");
+        long unix = json.getLong("date");
+        d.date = new Date(unix);
+        d.text = json.getString("text");
+        d.seen = json.getBoolean("seen");
+        d.toUserId = json.getLong("toUserId");
+        d.fromUserId = json.getLong("fromUserId");
         return d;
     }
 

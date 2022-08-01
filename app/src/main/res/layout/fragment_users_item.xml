@@ -72,7 +72,7 @@
                 android:layout_height="match_parent"
                 android:contentDescription="Avatar of User"
                 android:scaleType="fitXY"
-                tools:srcCompat="@tools:sample/avatars" />
+                app:srcCompat="@mipmap/ic_avatar_placeholder" />
 
         </androidx.cardview.widget.CardView>
     </androidx.constraintlayout.widget.ConstraintLayout>
